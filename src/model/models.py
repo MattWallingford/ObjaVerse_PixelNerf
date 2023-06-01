@@ -203,7 +203,8 @@ class PixelNeRFNet(torch.nn.Module):
 
             if self.use_encoder:
                 # Grab encoder's latent code.
-                uv = -xyz[:, :, :2] / xyz[:, :, 2:]  # (SB, B, 2)
+                eps = 1e-8
+                uv = -xyz[:, :, :2] / (xyz[:, :, 2:]+eps)  # (SB, B, 2)
                 uv *= repeat_interleave(
                     self.focal.unsqueeze(1), NS if self.focal.shape[0] > 1 else 1
                 )

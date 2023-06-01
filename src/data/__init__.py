@@ -1,6 +1,7 @@
 import os
 
 from .MultiObjectDataset import MultiObjectDataset
+from .objaverse import ObjaVerseDataset
 from .DVRDataset import DVRDataset
 from .SRNDataset import SRNDataset
 
@@ -25,6 +26,10 @@ def get_split_dataset(dataset_type, datadir, want_split="all", training=True, **
     elif dataset_type == "multi_obj":
         # For multiple-object
         dset_class = MultiObjectDataset
+
+    elif dataset_type == "objaverse":
+        # For multiple-object
+        dset_class = ObjaVerseDataset
     elif dataset_type.startswith("dvr"):
         # For ShapeNet 64x64
         dset_class = DVRDataset

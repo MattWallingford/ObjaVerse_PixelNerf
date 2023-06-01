@@ -233,6 +233,8 @@ class Trainer:
                         batch == self.num_total_batches - 1
                         or batch % self.accu_grad == self.accu_grad - 1
                     ):
+                        #Added because gradient was going to NaN when z is close to 0
+                        torch.nn.utils.clip_grad_norm_(self.net.parameters(), 1)
                         self.optim.step()
                         self.optim.zero_grad()
 
