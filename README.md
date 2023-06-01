@@ -1,4 +1,4 @@
-# pixelNeRF: Neural Radiance Fields from One or Few Images
+# pixelNeRF adapted for ObjaVerse-XL
 
 Adapted from PixelNerf for training on ObjaVerse-XL. Loader converts camera pose from Blender coordinates to OpenCV for matrix inversion, then converts to OpenGL to be consistent with PixelNerF. 
 
