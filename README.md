@@ -6,4 +6,4 @@ Includes gradient Clipping and epsilon trick to avoid exploding gradients when d
 
 After installing requirements.txt run: `pip install --force-reinstall -v "pyhocon==0.3.55"`
 
-Command to run: python3 train/train.py -n objaverse_Large -c conf/exp/ObjaVerse.conf -D ~/renders/ --gpu_id='0 1 2 3 4 5 6 7'  --epochs 1000 -B 32 --resume
+Command to run: `python3 train/train.py -n objaverse_Large -c conf/exp/ObjaVerse.conf -D ~/renders/ --gpu_id='0 1 2 3 4 5 6 7'  --epochs 1000 -B 32 --resume`
