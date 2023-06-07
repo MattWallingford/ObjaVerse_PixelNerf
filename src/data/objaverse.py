@@ -112,8 +112,9 @@ class ObjaVerseDataset(torch.utils.data.Dataset):
             img_tensor = self.image_to_tensor(img)
             mask = (img != 0).all(axis=-1)[..., None].astype(np.uint8) * 255
             mask_tensor = self.mask_to_tensor(mask)
-
-
+            cv2.imwrite('../test.png', mask)
+            cv2.imwrite('../test_img.png', img)
+            
             pose = torch.from_numpy(
                 np.load(pose_path) 
             ).float()
