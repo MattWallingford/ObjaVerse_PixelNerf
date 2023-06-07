@@ -17,7 +17,7 @@ class ObjaVerseDataset(torch.utils.data.Dataset):
         path,
         stage="train",
         list_prefix="softras_",
-        image_size=256,
+        image_size=512,
         max_imgs=100000,
         z_near=1.2,
         z_far=4.0,
@@ -45,9 +45,9 @@ class ObjaVerseDataset(torch.utils.data.Dataset):
         total_objs = len(obj_folders)
         self.total_objs = total_objs
         if stage == "train":
-            file_lists = obj_folders[:int(total_objs*.8)]
+            file_lists = obj_folders[:int(total_objs*.9)]
         elif stage == "val":
-            file_lists = file_lists = obj_folders[int(total_objs*.8):int(total_objs*.9)]
+            file_lists = file_lists = obj_folders[int(total_objs*.9):int(total_objs)]
         elif stage == "test":
             print(int(total_objs*.9))
             file_lists = obj_folders[int(total_objs*.9):]
@@ -105,9 +105,14 @@ class ObjaVerseDataset(torch.utils.data.Dataset):
         assert len(rgb_paths) == len(pose_paths)
         all_imgs = []
         all_poses = []
+        all_masks = []
+        all_bboxes = []
         for rgb_path, pose_path in zip(rgb_paths, pose_paths):
             img = imageio.imread(rgb_path)[..., :3]
             img_tensor = self.image_to_tensor(img)
+            mask = (img != 0).all(axis=-1)[..., None].astype(np.uint8) * 255
+            mask_tensor = self.mask_to_tensor(mask)
+
 
             pose = torch.from_numpy(
                 np.load(pose_path) 
@@ -123,20 +128,46 @@ class ObjaVerseDataset(torch.utils.data.Dataset):
             c_2_w = c_2_w@self._coord_trans
 
 
+            rows = np.any(mask, axis=1)
+            cols = np.any(mask, axis=0)
+            rnz = np.where(rows)[0]
+            cnz = np.where(cols)[0]
+            if len(rnz) == 0:
+                raise RuntimeError(
+                    "ERROR: Bad image at", rgb_path, "please investigate!"
+                )
+            rmin, rmax = rnz[[0, -1]]
+            cmin, cmax = cnz[[0, -1]]
+            bbox = torch.tensor([cmin, rmin, cmax, rmax], dtype=torch.float32)
+
             all_imgs.append(img_tensor)
             all_poses.append(c_2_w)
+            all_masks.append(mask_tensor)
+            all_bboxes.append(bbox)
 
         all_imgs = torch.stack(all_imgs)
         all_poses = torch.stack(all_poses)
-        all_imgs = F.interpolate(all_imgs, size=self.image_size, mode="area")
+        all_masks = torch.stack(all_masks)
+        all_bboxes = torch.stack(all_bboxes)
 
         focal = torch.tensor((560, 560), dtype=torch.float32)
+        if all_imgs.shape[-2:] != self.image_size:
+            scale = self.image_size / all_imgs.shape[-2]
+            focal *= scale
+            all_bboxes *= scale
+
+            all_imgs = F.interpolate(all_imgs, size=self.image_size, mode="area")
+            all_masks = F.interpolate(all_masks, size=self.image_size, mode="area")
+        #print(all_bboxes)
+
 
         result = {
             #"path": dir_path,
             "img_id": index,
             "focal": focal,
             "images": all_imgs,
+            "bbox": all_bboxes,
+            "masks": all_masks,
             "poses": all_poses,
         }
         return result
