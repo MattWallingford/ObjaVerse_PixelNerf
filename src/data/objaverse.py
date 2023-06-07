@@ -110,11 +110,13 @@ class ObjaVerseDataset(torch.utils.data.Dataset):
         for rgb_path, pose_path in zip(rgb_paths, pose_paths):
             img = imageio.imread(rgb_path)[..., :3]
             img_tensor = self.image_to_tensor(img)
-            mask = (img != 0).all(axis=-1)[..., None].astype(np.uint8) * 255
+            alpha = imageio.imread(rgb_path)[..., 3]
+            mask = (alpha != 0).astype(np.uint8) * 255
+            # mask = (img != 0).all(axis=-1)[..., None].astype(np.uint8) * 255
             mask_tensor = self.mask_to_tensor(mask)
-            cv2.imwrite('../test.png', mask)
-            cv2.imwrite('../test_img.png', img)
-            
+            # cv2.imwrite('../test.png', mask)
+            # cv2.imwrite('../test_img.png', img)
+
             pose = torch.from_numpy(
                 np.load(pose_path) 
             ).float()
@@ -134,11 +136,11 @@ class ObjaVerseDataset(torch.utils.data.Dataset):
             rnz = np.where(rows)[0]
             cnz = np.where(cols)[0]
             if len(rnz) == 0:
-                raise RuntimeError(
-                    "ERROR: Bad image at", rgb_path, "please investigate!"
-                )
-            rmin, rmax = rnz[[0, -1]]
-            cmin, cmax = cnz[[0, -1]]
+                rmin, rmax = 0, 0
+                cmin, cmax = 0, 0
+            else:
+                rmin, rmax = rnz[[0, -1]]
+                cmin, cmax = cnz[[0, -1]]
             bbox = torch.tensor([cmin, rmin, cmax, rmax], dtype=torch.float32)
 
             all_imgs.append(img_tensor)
@@ -167,8 +169,8 @@ class ObjaVerseDataset(torch.utils.data.Dataset):
             "img_id": index,
             "focal": focal,
             "images": all_imgs,
-            "bbox": all_bboxes,
-            "masks": all_masks,
+            # "bbox": all_bboxes,
+            # "masks": all_masks,
             "poses": all_poses,
         }
         return result
